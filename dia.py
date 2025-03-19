@@ -3,7 +3,6 @@ DuIvyAgent
 
 """
 
-
 import json
 
 import yaml
@@ -13,7 +12,6 @@ from prompt import system_prompt
 from terminal import run_terminal
 
 
-
 class NEO(object):
 
     def __init__(self):
@@ -21,7 +19,6 @@ class NEO(object):
             self.config = yaml.safe_load(fo)
         print(self.config)
         self.messages = [{"role": "system", "content": system_prompt}]
-    
 
     def __call__(self):
 
@@ -36,24 +33,27 @@ class NEO(object):
                         "properties": {
                             "command": {
                                 "type": "string",
-                                "description": "Shell command to run"
+                                "description": "Shell command to run",
                             },
                             "description": {
                                 "type": "string",
-                                "description": "description of the command"
+                                "description": "description of the command",
                             },
                         },
-                        "required": ["command", "description"]
-                    }
-                }
+                        "required": ["command", "description"],
+                    },
+                },
             },
         ]
 
-        headers = {"Authorization": f"Bearer {self.config['api_key']}", "Content-Type": "application/json"}
+        headers = {
+            "Authorization": f"Bearer {self.config['api_key']}",
+            "Content-Type": "application/json",
+        }
         data = {
-            "model": self.config['model'],
-            "temperature": self.config['temperature'],
-            "max_tokens": self.config['max_tokens'],
+            "model": self.config["model"],
+            "temperature": self.config["temperature"],
+            "max_tokens": self.config["max_tokens"],
             "tools": tools,
         }
 
@@ -66,20 +66,24 @@ class NEO(object):
             data["messages"] = self.messages
             # print(self.messages)
             response = requests.post(
-                url=self.config['base_url'],
+                url=self.config["base_url"],
                 headers=headers,
                 json=data,
-                # timeout=self.config["timeout"]
+                timeout=self.config["timeout"],
             )
-            response.raise_for_status()  
+            response.raise_for_status()
             result = response.json()
             resp_content = result["choices"][0]["message"]["content"]
             if resp_content != "":
                 print(f"\nNEO >>> {resp_content}")
 
             if "tool_calls" in result["choices"][0]["message"]:
-                tool_calls = json.loads(result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"])
-                print(tool_calls)
+                tool_calls = json.loads(
+                    result["choices"][0]["message"]["tool_calls"][0]["function"][
+                        "arguments"
+                    ]
+                )
+                # print(tool_calls)
                 tool_calls_cmd = tool_calls.get("command", "")
                 tool_calls_description = tool_calls.get("description", "")
                 print(f"\nNEO >>> {tool_calls_description}")
@@ -87,12 +91,17 @@ class NEO(object):
                 tool_calls = ""
                 tool_calls_cmd = ""
                 tool_calls_description = ""
-            self.messages.append({"role": "assistant", "content": f"content:{resp_content};\ncommand:{tool_calls_cmd};\ncommand_description:{tool_calls_description}"})
+            self.messages.append(
+                {
+                    "role": "assistant",
+                    "content": f"content:{resp_content};\ncommand:{tool_calls_cmd};\ncommand_description:{tool_calls_description}",
+                }
+            )
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
-                print(f"Running command: {tool_calls_cmd} (Y/n) ", end = "")
+                print(f"Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
                     cmd_res = run_terminal(tool_calls_cmd)
                     print(f"returncode: {cmd_res['returncode']}")
@@ -111,7 +120,6 @@ class NEO(object):
 
 def main():
     NEO()()
-
 
 
 if __name__ == "__main__":

@@ -1,12 +1,9 @@
-""" 
-
-"""
-
+""" """
 
 import subprocess
 
 
-def run_terminal(command: str): 
+def run_terminal(command: str):
     """run the terminal command and output status, output, error"""
     res = {"returncode": -1, "output": "", "error": ""}
     print(f"\nrunning in terminal: \n {command}")
@@ -20,4 +17,4 @@ def run_terminal(command: str):
     res["output"] = output
     res["error"] = error
 
-    return res 
+    return res
