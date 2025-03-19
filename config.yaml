@@ -8,7 +8,7 @@ max_retries: 3                           # 最大重试次数
 # 模型配置
 model: "deepseek-chat"                   # 默认使用的模型名称
 temperature: 0.0                         # 生成多样性 (0~1)
-max_tokens: 8196                         # 生成最大 token 数
+max_tokens: 8192                         # 生成最大 token 数
 top_p: 0.9                               # 采样阈值
 
 # 高级配置
