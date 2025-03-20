@@ -17,7 +17,7 @@ class NEO(object):
     def __init__(self):
         with open("config.yaml", "r") as fo:
             self.config = yaml.safe_load(fo)
-        print(self.config)
+        # print(self.config)
         self.messages = [{"role": "system", "content": system_prompt}]
 
     def __call__(self):
@@ -69,7 +69,7 @@ class NEO(object):
                 url=self.config["base_url"],
                 headers=headers,
                 json=data,
-                timeout=self.config["timeout"],
+                # timeout=self.config["timeout"],
             )
             response.raise_for_status()
             result = response.json()
@@ -109,11 +109,11 @@ class NEO(object):
                     print(f"error: >>> \n {cmd_res['error']}")
                     user_prompt = str(cmd_res)
                 else:
-                    user_prompt = input("\n>>>>>>>>>\nUser >>> ")
+                    user_prompt = input("\n"+">"*78 +"\nUser >>> ")
                     if user_prompt == "exit":
                         break
             else:
-                user_prompt = input("\n>>>>>>>>>\nUser >>> ")
+                user_prompt = input("\n"+">"*78+"\nUser >>> ")
                 if user_prompt == "exit":
                     break
 

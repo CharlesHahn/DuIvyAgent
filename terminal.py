@@ -6,7 +6,7 @@ import subprocess
 def run_terminal(command: str):
     """run the terminal command and output status, output, error"""
     res = {"returncode": -1, "output": "", "error": ""}
-    print(f"\nrunning in terminal: \n {command}")
+    print(f"\n>>> running in terminal: \n {command}")
     p = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
