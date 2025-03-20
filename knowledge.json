@@ -1,0 +1,51 @@
+[
+  {
+    "query": "DuIvyTools文档",
+    "answer": {
+      "type": "file",
+      "content": "DuIvyTools.md"
+    }
+  },
+  {
+    "query": "力场选择",
+    "answer": {
+      "type": "string",
+      "content": "常用力场：\n- Amber99sb-ildn (蛋白质)\n- CHARMM36 (脂质膜)\n- Martini (粗粒化模拟)"
+    }
+  },
+  {
+    "query": "温度耦合方案",
+    "answer": {
+      "type": "string",
+      "content": "推荐使用V-rescale热浴：\n- 时间常数：0.1 ps\n- 参考温度：310 K"
+    }
+  },
+  {
+    "query": "水模型设置",
+    "answer": {
+      "type": "string",
+      "content": "推荐选择：\n1. TIP3P (常规模拟)\n2. TIP4P-Ew (精确水合作用)\n3. SPC/E (高效计算)"
+    }
+  },
+  {
+    "query": "md.mdp模板",
+    "answer": {
+      "type": "file",
+      "content": "md.mdp"
+    }
+  },
+  {
+    "query": "模拟时间步长",
+    "answer": {
+      "type": "string",
+      "content": "建议设置：\n- 积分步长：2 fs\n- 总模拟时间：100 ns"
+    }
+  },
+  {
+    "query": "力场",
+    "answer": {
+      "type": "string",
+      "content": "推荐使用amber99sb-ildn或charmm36"
+    }
+  }
+]

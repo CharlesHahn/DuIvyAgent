@@ -2,14 +2,21 @@
 # API 基础配置
 base_url: "https://api.deepseek.com/chat/completions"  # API 基础地址
 api_key: "sk-e66ad50126e44056a9b24cafb2eb06c9"             # 替换为你的实际 API 密钥
-timeout: 30                              # 请求超时时间（秒）
-max_retries: 3                           # 最大重试次数
 
-# 模型配置
 model: "deepseek-chat"                   # 默认使用的模型名称
 temperature: 0.0                         # 生成多样性 (0~1)
 max_tokens: 8192                         # 生成最大 token 数
 top_p: 0.9                               # 采样阈值
+
+knowledge_json: "knowledge.json"         # 知识库文件路径
+
+
+
+
+timeout: 30                              # 请求超时时间（秒）
+max_retries: 3                           # 最大重试次数
+
+# 模型配置
 
 # 高级配置
 stream: false                            # 是否使用流式响应

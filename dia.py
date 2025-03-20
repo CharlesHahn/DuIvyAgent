@@ -9,6 +9,7 @@ import yaml
 import requests
 
 from prompt import system_prompt
+from knowledge import KnowledgeBase
 from terminal import run_terminal
 
 
@@ -18,6 +19,10 @@ class NEO(object):
         with open("config.yaml", "r") as fo:
             self.config = yaml.safe_load(fo)
         # print(self.config)
+
+        self.knowledge = KnowledgeBase(self.config["knowledge_json"])
+        all_queries = self.knowledge.get_all_queries()
+        print(all_queries)
         self.messages = [{"role": "system", "content": system_prompt}]
 
     def __call__(self):
@@ -41,6 +46,24 @@ class NEO(object):
                             },
                         },
                         "required": ["command", "description"],
+                    },
+                },
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "query_knowledge",
+                    "description": "Query knowledge base for detailed information by keywords",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "the keywords to query",
+                                "enum": self.knowledge.get_all_queries(),
+                            },
+                        },
+                        "required": ["query"],
                     },
                 },
             },
@@ -76,31 +99,42 @@ class NEO(object):
             resp_content = result["choices"][0]["message"]["content"]
             if resp_content != "":
                 print(f"\nNEO >>> {resp_content}")
+            
+            print(result["choices"][0]["message"])
 
+            tool_calls = ""
+            tool_calls_cmd = ""
+            tool_calls_description = ""
+            tool_calls_query = ""
             if "tool_calls" in result["choices"][0]["message"]:
-                tool_calls = json.loads(
-                    result["choices"][0]["message"]["tool_calls"][0]["function"][
-                        "arguments"
-                    ]
+                tool_calls = result["choices"][0]["message"]["tool_calls"][0]["function"]
+                print(tool_calls)
+                tool_calls_args = json.loads(
+                    result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
                 )
-                # print(tool_calls)
-                tool_calls_cmd = tool_calls.get("command", "")
-                tool_calls_description = tool_calls.get("description", "")
-                print(f"\nNEO >>> {tool_calls_description}")
+                if tool_calls.get("name", "") == "run_command":
+                    tool_calls_cmd = tool_calls_args.get("command", "")
+                    tool_calls_description = tool_calls_args.get("description", "")
+                elif tool_calls.get("name", "") == "query_knowledge":
+                    tool_calls_query = tool_calls_args.get("query", "")
+                    print("xxxxxxx NEO querying knowledge base for ", tool_calls_query)
+                else:
+                    pass
             else:
-                tool_calls = ""
-                tool_calls_cmd = ""
-                tool_calls_description = ""
+                pass
+
             self.messages.append(
                 {
                     "role": "assistant",
-                    "content": f"content:{resp_content};\ncommand:{tool_calls_cmd};\ncommand_description:{tool_calls_description}",
+                    # "content": f"content:{resp_content};\ncommand:{tool_calls_cmd};\ncommand_description:{tool_calls_description}",
+                    "content": str(result["choices"][0]["message"])
                 }
             )
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
+                print(f"\nNEO >>> {tool_calls_description}")
                 print(f"Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
                     cmd_res = run_terminal(tool_calls_cmd)
@@ -112,10 +146,15 @@ class NEO(object):
                     user_prompt = input("\n"+">"*78 +"\nUser >>> ")
                     if user_prompt == "exit":
                         break
+            elif tool_calls_query != "":
+                print(f"NEO querying knowledge base for {tool_calls_query}")
+                user_prompt = f"The answer to your query is below: \n{'>'*80}\n{str(self.knowledge.query_pair(tool_calls_query))} \n {'>'*80}"
             else:
                 user_prompt = input("\n"+">"*78+"\nUser >>> ")
                 if user_prompt == "exit":
                     break
+            
+
 
 
 def main():
