@@ -143,14 +143,14 @@ class NEO(object):
                     print(f"error: >>> \n {cmd_res['error']}")
                     user_prompt = str(cmd_res)
                 else:
-                    user_prompt = input("\n"+">"*78 +"\nUser >>> ")
+                    user_prompt = input("\n"+">"*80 +"\nUser >>> ")
                     if user_prompt == "exit":
                         break
             elif tool_calls_query != "":
-                print(f"NEO querying knowledge base for {tool_calls_query}")
+                print(f"NEO >>> querying knowledge base for {tool_calls_query}")
                 user_prompt = f"The answer to your query is below: \n{'>'*80}\n{str(self.knowledge.query_pair(tool_calls_query))} \n {'>'*80}"
             else:
-                user_prompt = input("\n"+">"*78+"\nUser >>> ")
+                user_prompt = input("\n"+">"*80+"\nUser >>> ")
                 if user_prompt == "exit":
                     break
             
