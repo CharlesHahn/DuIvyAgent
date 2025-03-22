@@ -92,7 +92,7 @@ gmx trjconv -s md.tpr -f fit.xtc -o fit.pdb -dt 1000 -n prolig.ndx
 首先我们需要利用covar命令得到协方差矩阵：
 
 ```bash
-gmx covar -s md.tpr -f md_fit.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covar.xpm -ascii covar.dat
+gmx covar -s md.tpr -f md.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covar.xpm -ascii covar.dat
 ```
 
 按照需要选择对齐的组和计算的组，之后协方差矩阵会被保存到xpm文件中，协方差矩阵的数据信息会被保存到dat文件中。

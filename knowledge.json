@@ -7,10 +7,17 @@
         }
     },
     {
+        "query": "蛋白质模拟的相关分析的文档，包括周期性校正、动态互相关矩阵DCCM、残基距离接触矩阵RDCM、主成分分析PCA、自由能形貌图FEL",
+        "answer": {
+            "type": "file",
+            "content": "knowledges/MD_Protein_Analysis.md"
+        }
+    },
+    {
         "query": "力场选择",
         "answer": {
             "type": "string",
-            "content": "knowledges/forcefield_selection.md"
+            "content": "knowledges/Forcefield_Selection.md"
         }
     }
 ]

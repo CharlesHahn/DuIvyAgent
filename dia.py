@@ -1,6 +1,13 @@
 """
 DuIvyAgent
 
+TODO
+1. 错误选组什么的导致run_terminal不能正常结束，p.wait
+2. 增加文档理解能力
+3. IMPORTANT 增加任务拆分的逻辑能力
+
+
+
 """
 
 import json
@@ -19,11 +26,16 @@ class NEO(object):
         with open("config.yaml", "r") as fo:
             self.config = yaml.safe_load(fo)
         # print(self.config)
+        self.messages = [{"role": "system", "content": system_prompt}]
 
         self.knowledge = KnowledgeBase(self.config["knowledge_json"])
         all_queries = self.knowledge.get_all_queries()
-        print(all_queries)
-        self.messages = [{"role": "system", "content": system_prompt}]
+        print("="*80)
+        print("Available queries of knowledge base:")
+        for i, query in enumerate(all_queries):
+            print(f" [{i+1:>2}] {query}")
+        print("="*80)
+
 
     def __call__(self):
 
@@ -80,7 +92,7 @@ class NEO(object):
             "tools": tools,
         }
 
-        user_prompt = input("\n>>>>>>>>>\nUser >>> ")
+        user_prompt = input("\n" + ">"*80 + "\nUser >>> ")
         while True:
             if user_prompt == "exit":
                 break
@@ -98,17 +110,16 @@ class NEO(object):
             result = response.json()
             resp_content = result["choices"][0]["message"]["content"]
             if resp_content != "":
-                print(f"\nNEO >>> {resp_content}")
+                print(f"\nNEO ->>> {resp_content}")
             
-            print(result["choices"][0]["message"])
-
+            # print(result["choices"][0]["message"])
+            
             tool_calls = ""
             tool_calls_cmd = ""
             tool_calls_description = ""
             tool_calls_query = ""
             if "tool_calls" in result["choices"][0]["message"]:
                 tool_calls = result["choices"][0]["message"]["tool_calls"][0]["function"]
-                print(tool_calls)
                 tool_calls_args = json.loads(
                     result["choices"][0]["message"]["tool_calls"][0]["function"]["arguments"]
                 )
@@ -117,7 +128,6 @@ class NEO(object):
                     tool_calls_description = tool_calls_args.get("description", "")
                 elif tool_calls.get("name", "") == "query_knowledge":
                     tool_calls_query = tool_calls_args.get("query", "")
-                    print("xxxxxxx NEO querying knowledge base for ", tool_calls_query)
                 else:
                     pass
             else:
