@@ -5,7 +5,7 @@ TODO
 1. 错误选组什么的导致run_terminal不能正常结束，p.wait
 2. 增加文档理解能力
 3. IMPORTANT 增加任务拆分的逻辑能力
-
+4. 有时候会出现知识库的重复query,不明白为什么？
 
 
 """
@@ -52,12 +52,8 @@ class NEO(object):
                                 "type": "string",
                                 "description": "Shell command to run",
                             },
-                            "description": {
-                                "type": "string",
-                                "description": "description of the command",
-                            },
                         },
-                        "required": ["command", "description"],
+                        "required": ["command"],
                     },
                 },
             },
@@ -108,6 +104,9 @@ class NEO(object):
             )
             response.raise_for_status()
             result = response.json()
+            print("*"*80)
+            print(result)
+            print("*"*80)
             resp_content = result["choices"][0]["message"]["content"]
             if resp_content != "":
                 print(f"\nNEO ->>> {resp_content}")
@@ -116,7 +115,6 @@ class NEO(object):
             
             tool_calls = ""
             tool_calls_cmd = ""
-            tool_calls_description = ""
             tool_calls_query = ""
             if "tool_calls" in result["choices"][0]["message"]:
                 tool_calls = result["choices"][0]["message"]["tool_calls"][0]["function"]
@@ -125,7 +123,6 @@ class NEO(object):
                 )
                 if tool_calls.get("name", "") == "run_command":
                     tool_calls_cmd = tool_calls_args.get("command", "")
-                    tool_calls_description = tool_calls_args.get("description", "")
                 elif tool_calls.get("name", "") == "query_knowledge":
                     tool_calls_query = tool_calls_args.get("query", "")
                 else:
@@ -133,19 +130,12 @@ class NEO(object):
             else:
                 pass
 
-            self.messages.append(
-                {
-                    "role": "assistant",
-                    # "content": f"content:{resp_content};\ncommand:{tool_calls_cmd};\ncommand_description:{tool_calls_description}",
-                    "content": str(result["choices"][0]["message"])
-                }
-            )
+            self.messages.append(result["choices"][0]["message"])
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
-                print(f"\nNEO >>> {tool_calls_description}")
-                print(f"Running command: {tool_calls_cmd} (Y/n) ", end="")
+                print(f"NEO >>> Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
                     cmd_res = run_terminal(tool_calls_cmd)
                     print(f"returncode: {cmd_res['returncode']}")

@@ -20,10 +20,11 @@ gmx trjconv的参数多种多样，可以有多种校正轨迹的组合，自己
 首先生成一个体系的索引文件，并在里面添加 center 组，组内只有一个原子，之后会以这个原子为盒子中心对体系进行居中。
 
 ```bash
-# 把蛋白配体组合到一个组
-gmx make_ndx -f md.tpr -o prolig.ndx
+echo -e "q\n" | gmx make_ndx -f md.tpr -o index.ndx 
+# 如果需要蛋白复合物组，可以把蛋白和可能存在的配体组合到一个组
+echo -e "Protein | Lig \nq\n" | gmx make_ndx -f md.tpr -o index.ndx
 # 手动添加一个 center 组
-echo -e "\n[ center ]\n500\n" >> prolig.ndx
+echo -e "\n[ center ]\n500\n" >> index.ndx
 ```
 
 这里例子里选择的是序号为500的原子。
@@ -33,7 +34,7 @@ echo -e "\n[ center ]\n500\n" >> prolig.ndx
 这里我们以npt.gro文件为例，寻找一个可以对蛋白进行居中的中心原子。可以使用DuIvyTools的`find_center`命令来进行中心原子的寻找，这个命令需要两个输入文件，一个是模拟的gro文件，一个是体系的索引文件。
 
 ```bash
-dit find_center -f npt.gro index.ndx
+echo -e "Protein\n" | dit find_center -f npt.gro index.ndx
 ```
 
 输入这个命令之后需要选组，比如说要对蛋白质居中的话，就选蛋白质就行了，这个命令可以找到蛋白质内的最靠近中心的原子的序号。
@@ -43,7 +44,7 @@ dit find_center -f npt.gro index.ndx
 执行下面的命令对体系进行居中：
 
 ```bash
-gmx trjconv -s md.tpr -f md.xtc -o center.xtc -n prolig.ndx -pbc atom -center
+echo -e "center\nProtein_Lig\n" | gmx trjconv -s md.tpr -f md.xtc -o center.xtc -n index.ndx -pbc atom -center
 # 第一次输入要居中的组，选 center 组
 # 第二次输入要输出的组，选你自己定义的蛋白配体组
 ```
@@ -53,7 +54,7 @@ gmx trjconv -s md.tpr -f md.xtc -o center.xtc -n prolig.ndx -pbc atom -center
 对居中之后的轨迹做一遍保证分子完整性的校正。当然可以用whole选项保证分子完整性，我这里用下面这条命令：
 
 ```bash
-gmx trjconv -s md.tpr -f center.xtc -o mol.xtc -n prolig.ndx -pbc mol -ur compact
+echo -e "Protein_Lig\n" | gmx trjconv -s md.tpr -f center.xtc -o mol.xtc -n prolig.ndx -pbc mol -ur compact
 # 选择蛋白配体组即可
 ```
 
@@ -62,7 +63,7 @@ gmx trjconv -s md.tpr -f center.xtc -o mol.xtc -n prolig.ndx -pbc mol -ur compac
 如果幸运的话，做完上述两步应该就可以了，我个人习惯还对蛋白去除一下平动和转动，方便查看配体和蛋白质之间的相互运动：
 
 ```bash
-gmx trjconv -s md.tpr -f mol.xtc -o fit.xtc -n prolig.ndx -fit rot+trans
+echo -e "Backbone\nProtein_Lig\n" | gmx trjconv -s md.tpr -f mol.xtc -o fit.xtc -n prolig.ndx -fit rot+trans
 # 第一次输入，选择对蛋白质进行fit
 # 第二次输入，选择蛋白配体组进行轨迹输出
 ```
@@ -70,7 +71,7 @@ gmx trjconv -s md.tpr -f mol.xtc -o fit.xtc -n prolig.ndx -fit rot+trans
 这里得到的fit.xtc就是周期性校正之后的蛋白质（或者蛋白质配体复合物）的轨迹了，可以用于后续分析。有些命令执行的时候还需要tpr文件和xtc文件里面的原子数目一致，因而也需要对tpr文件做一下处理使之和xtc文件的原子数目一致。可以使用`gmx convert-tpr`命令完成这个操作：
 
 ```bash
-gmx convert-tpr -s md.tpr -o fit.tpr -n index.ndx
+echo -e "Protein_Lig\n" | gmx convert-tpr -s md.tpr -o fit.tpr -n index.ndx
 ```
 
 选择和前面生成xtc的同样的组就行了，如此就可以保证tpr和xtc有同样的原子数目。
@@ -79,7 +80,7 @@ gmx convert-tpr -s md.tpr -o fit.tpr -n index.ndx
 不管校正到哪一步了，都可以把轨迹可视化出来，自己visual check一下。我一般习惯把xtc转成pdb，用pymol查看。
 
 ```bash
-gmx trjconv -s md.tpr -f fit.xtc -o fit.pdb -dt 1000 -n prolig.ndx 
+echo -e "Protein_Lig\n" | gmx trjconv -s md.tpr -f fit.xtc -o fit.pdb -dt 1000 -n prolig.ndx 
 ```
 
 加个-dt 1000，选择合适的时间间隔，防止输出的pdb文件太大。
@@ -92,7 +93,7 @@ gmx trjconv -s md.tpr -f fit.xtc -o fit.pdb -dt 1000 -n prolig.ndx
 首先我们需要利用covar命令得到协方差矩阵：
 
 ```bash
-gmx covar -s md.tpr -f md.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covar.xpm -ascii covar.dat
+echo -e "C-alpha\nC-alpha\n" | gmx covar -s md.tpr -f md.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covar.xpm -ascii covar.dat
 ```
 
 按照需要选择对齐的组和计算的组，之后协方差矩阵会被保存到xpm文件中，协方差矩阵的数据信息会被保存到dat文件中。
@@ -106,7 +107,7 @@ dit dccm_ascii -f covar.dat -o dccm.xpm
 之后使用DuIvyTools对dccm.xpm进行可视化：
 
 ```bash
-dit xpm_show -f dccm.xpm -o dccm.png -zmin -1 -zmax 1 -cmap bwr 
+dit xpm_show -f dccm.xpm -o dccm.png -zmin -1 -zmax 1 -cmap bwr -m contour
 ```
 
 #### 残基距离接触矩阵(residue distance contact matrix)
@@ -114,7 +115,7 @@ dit xpm_show -f dccm.xpm -o dccm.png -zmin -1 -zmax 1 -cmap bwr
 使用`gmx mdmat`可以得到模拟轨迹的平均残基距离接触矩阵，也可以通过`-b`和`-e`等来设置分析时间：
 
 ```bash
-gmx mdmat -f md.xtc -s md.tpr -mean rdcm.xpm
+echo -e "Protein\n" | gmx mdmat -f md.xtc -s md.tpr -mean rdcm.xpm
 ```
 
 之后使用DuIvyTools将rdcm.xpm可视化：
@@ -130,7 +131,7 @@ dit xpm_show -f rdcm.xpm -o rdcm.png
 `covar`命令的作用是对轨迹进行协方差矩阵和本征向量的计算。
 
 ```bash
-gmx covar -s md.tpr -f md.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covapic.xpm 
+echo -e "C-alpha\nC-alpha\n" | gmx covar -s md.tpr -f md.xtc -o eigenvalues.xvg -v eigenvectors.trr -xpma covapic.xpm 
 ```
 
 - eigenvalues.xvg里面记录了分析得出的多个本征值的序号和大小
@@ -143,11 +144,11 @@ eigenvalues.xvg里面存储的按本征值大小排序的多个本征值。我�
 
 covapic.xpm存储的是协方差矩阵，同样是xpm文件，可以用`dit xpm_show`命令查看。
 
-之后我们需要利用anaeig命令将轨迹投影到前两个主成分上，也即生成pc1.xvg和pc2.xvg。
+之后我们需要利用anaeig命令将轨迹投影到前两个主成分上，也即生成pc1.xvg和pc2.xvg。这里要选择的组须得是和前面`gmx covar`命令选的一样的。
 
 ```bash
-gmx anaeig -s pro.tpr -f pro20.xtc -v eigenvectors.trr -first 1 -last 1 -proj pc1.xvg
-gmx anaeig -s pro.tpr -f pro20.xtc -v eigenvectors.trr -first 2 -last 2 -proj pc2.xvg
+echo -e "C-alpha\nC-alpha\n" | gmx anaeig -s md.tpr -f md.xtc -v eigenvectors.trr -first 1 -last 1 -proj pc1.xvg
+echo -e "C-alpha\nC-alpha\n" | gmx anaeig -s md.tpr -f md.xtc -v eigenvectors.trr -first 2 -last 2 -proj pc2.xvg
 ```
 
 #### 自由能形貌图(free energy landscape, FEL)
@@ -157,9 +158,9 @@ gmx anaeig -s pro.tpr -f pro20.xtc -v eigenvectors.trr -first 2 -last 2 -proj pc
 首先获得蛋白质的RMSD(对齐到backbone)和蛋白质的回旋半径数据并存储到rmsd.xvg和gyrate.xvg中：
 
 ```bash
-gmx rms -s md.tpr -f md.xtc -o rmsd.xvg
+echo -e "Backbone\nProtein\n" | gmx rms -s md.tpr -f md.xtc -o rmsd.xvg
 # 选择backbone进行对齐，选择Protein计算和输出
-gmx gyrate -s md.tpr -f md.xtc -o gyrate.xvg
+echo -e "Protein\n" | gmx gyrate -s md.tpr -f md.xtc -o gyrate.xvg
 # 选择Protein进行计算
 ```
 
@@ -174,7 +175,7 @@ dit xvg_combine -f rmsd.xvg gyrate.xvg -c 0,1 1 -o sham.xvg
 得到组合文件之后，就可以利用gmx的sham命令来生成自由能形貌图了:
 
 ```bash
-gmx sham -tsham 310 -nlevels 100 -f output.xvg -ls gibbs.xpm -g gibbs.log -lsh enthalpy.xpm -lss entropy.xpm
+gmx sham -tsham 310 -nlevels 100 -f sham.xvg -ls gibbs.xpm -g gibbs.log -lsh enthalpy.xpm -lss entropy.xpm
 ```
 
 简单介绍下这些参数：
@@ -192,7 +193,7 @@ gmx sham -tsham 310 -nlevels 100 -f output.xvg -ls gibbs.xpm -g gibbs.log -lsh e
 gibbs.xpm即是最关心的是Gibbs自由能的形貌图。可以使用DuIvyTools对其进行绘图：
 
 ```bash
-dit xpm_show -f gibbs.xpm -m countour -cmap jet -o fel.png
+dit xpm_show -f gibbs.xpm -m contour -cmap jet -o fel.png
 ```
 
 在完成了自由能形貌图的绘制之后，可能需要寻找FEL中最低能量对应的蛋白质构象。
@@ -228,7 +229,7 @@ bindex.ndx部分截取如下：
 假如说要提取时刻为1010ps的构象：
 
 ```bash
-gmx trjconv -f md.xtc -s md.tpr -b 1010 -e 1010 -o protein.pdb
+echo -e "Protein\n" | gmx trjconv -f md.xtc -s md.tpr -b 1010 -e 1010 -o protein.pdb
 ```
 
 如此就可以获得了对应时刻的构象了。
