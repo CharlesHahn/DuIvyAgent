@@ -84,7 +84,7 @@ class NEO(object):
         data = {
             "model": self.config["model"],
             "temperature": self.config["temperature"],
-            "max_tokens": self.config["max_tokens"],
+            # "max_tokens": self.config["max_tokens"],
             "tools": tools,
         }
 
@@ -130,17 +130,23 @@ class NEO(object):
             else:
                 pass
 
-            self.messages.append(result["choices"][0]["message"])
+
+            self.messages.append({"role": "user", "content": resp_content})
+            # self.messages.append(result["choices"][0]["message"])
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
                 print(f"NEO >>> Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
-                    cmd_res = run_terminal(tool_calls_cmd)
-                    print(f"returncode: {cmd_res['returncode']}")
-                    print(f"output: >>> \n {cmd_res['output']}")
-                    print(f"error: >>> \n {cmd_res['error']}")
+                    try:
+                        cmd_res = run_terminal(tool_calls_cmd)
+                        print(f"returncode: {cmd_res['returncode']}")
+                        print(f"output: >>> \n {cmd_res['output']}")
+                        print(f"error: >>> \n {cmd_res['error']}")
+                    except KeyboardInterrupt:
+                        print("Command interrupted by user. Try to fix the problem by NEO")
+                        cmd_res = "Command interrupted by user. Something wrong with the command, lack of input? please check the command and try again."
                     user_prompt = str(cmd_res)
                 else:
                     user_prompt = input("\n"+">"*80 +"\nUser >>> ")
