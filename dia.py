@@ -52,8 +52,12 @@ class NEO(object):
                                 "type": "string",
                                 "description": "Shell command to run",
                             },
+                            "description": {
+                                "type": "string",
+                                "description": "the reason why you want to run this command",
+                            },
                         },
-                        "required": ["command"],
+                        "required": ["command", "description"],
                     },
                 },
             },
@@ -108,13 +112,11 @@ class NEO(object):
             print(result)
             print("*"*80)
             resp_content = result["choices"][0]["message"]["content"]
-            if resp_content != "":
-                print(f"\nNEO ->>> {resp_content}")
-            
             # print(result["choices"][0]["message"])
             
             tool_calls = ""
             tool_calls_cmd = ""
+            tool_calls_cmd_description = ""
             tool_calls_query = ""
             if "tool_calls" in result["choices"][0]["message"]:
                 tool_calls = result["choices"][0]["message"]["tool_calls"][0]["function"]
@@ -123,6 +125,7 @@ class NEO(object):
                 )
                 if tool_calls.get("name", "") == "run_command":
                     tool_calls_cmd = tool_calls_args.get("command", "")
+                    tool_calls_cmd_description = tool_calls_args.get("description", "")
                 elif tool_calls.get("name", "") == "query_knowledge":
                     tool_calls_query = tool_calls_args.get("query", "")
                 else:
@@ -131,13 +134,22 @@ class NEO(object):
                 pass
 
 
-            self.messages.append({"role": "user", "content": resp_content})
-            # self.messages.append(result["choices"][0]["message"])
+            if resp_content != "":
+                print(f"\nNEO ->>> {resp_content}")
+                self.messages.append({"role": "assistant", "content": resp_content})
+            else:
+                if tool_calls_cmd != "":
+                    self.messages.append({"role": "assistant", "content": f" running command: {tool_calls_cmd}"})
+                elif tool_calls_query != "":
+                    self.messages.append({"role": "assistant", "content": f" querying knowledge base for {tool_calls_query}"})
+                else:
+                    pass
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
-                print(f"NEO >>> Running command: {tool_calls_cmd} (Y/n) ", end="")
+                print(f"NEO >>> {tool_calls_cmd_description}")
+                print(f">> Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
                     try:
                         cmd_res = run_terminal(tool_calls_cmd)

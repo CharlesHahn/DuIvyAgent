@@ -1,10 +1,10 @@
 # DeepSeek API 配置
 # API 基础配置
 base_url: "https://api.deepseek.com/chat/completions"  # API 基础地址
-api_key: "sk-e66ad50126e44056a9b24cafb2eb06c9"             # 替换为你的实际 API 密钥
+api_key: ""             # 替换为你的实际 API 密钥
 
 model: "deepseek-chat"                   # 默认使用的模型名称
-temperature: 1.0                         # 生成多样性 (0~1)
+temperature: 0.0                         # 生成多样性 (0~1)
 max_tokens: 8192                         # 生成最大 token 数
 
 knowledge_json: "knowledge.json"         # 知识库文件路径
