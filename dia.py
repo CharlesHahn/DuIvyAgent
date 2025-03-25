@@ -137,13 +137,14 @@ class NEO(object):
             if resp_content != "":
                 print(f"\nNEO ->>> {resp_content}")
                 self.messages.append({"role": "assistant", "content": resp_content})
-            else:
-                if tool_calls_cmd != "":
-                    self.messages.append({"role": "assistant", "content": f" running command: {tool_calls_cmd}"})
-                elif tool_calls_query != "":
-                    self.messages.append({"role": "assistant", "content": f" querying knowledge base for {tool_calls_query}"})
-                else:
-                    pass
+
+            # else:
+            #     if tool_calls_cmd != "":
+            #         self.messages.append({"role": "assistant", "content": f" running command: {tool_calls_cmd}"})
+            #     elif tool_calls_query != "":
+            #         self.messages.append({"role": "assistant", "content": f" querying knowledge base for {tool_calls_query}"})
+            #     else:
+            #         pass
             # print(self.messages)
 
             ## parse command
