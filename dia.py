@@ -20,6 +20,12 @@ from knowledge import KnowledgeBase
 from terminal import run_terminal
 
 
+def log_print(msg, end="\n"):
+    print(msg, end=end)
+    with open ("NEO_run_log.log", 'a') as fo:
+        fo.write(msg+end)
+
+
 class NEO(object):
 
     def __init__(self):
@@ -30,11 +36,12 @@ class NEO(object):
 
         self.knowledge = KnowledgeBase(self.config["knowledge_json"])
         all_queries = self.knowledge.get_all_queries()
-        print("="*80)
-        print("Available queries of knowledge base:")
+        log_print("="*80)
+        log_print("Available queries of knowledge base:")
         for i, query in enumerate(all_queries):
-            print(f" [{i+1:>2}] {query}")
-        print("="*80)
+            log_print(f" [{i+1:>2}] {query}")
+        log_print("="*80)
+
 
         # Load skills
         from skills_loader import SkillsLoader
@@ -141,9 +148,9 @@ class NEO(object):
             )
             response.raise_for_status()
             result = response.json()
-            print("*"*80)
-            print(result)
-            print("*"*80)
+            log_print("*"*80)
+            log_print(str(result))
+            log_print("*"*80)
             resp_content = result["choices"][0]["message"]["content"]
             # print(result["choices"][0]["message"])
             
@@ -171,7 +178,7 @@ class NEO(object):
 
 
             if resp_content != "":
-                print(f"\nNEO ->>> {resp_content}")
+                log_print(f"\nNEO ->>> {resp_content}")
                 self.messages.append({"role": "assistant", "content": resp_content})
             else:
                 if tool_calls_cmd != "":
@@ -182,20 +189,28 @@ class NEO(object):
                     self.messages.append({"role": "assistant", "content": f" loading skill content for {tool_calls_skill}"})
                 else:
                     pass
+
+            # else:
+            #     if tool_calls_cmd != "":
+            #         self.messages.append({"role": "assistant", "content": f" running command: {tool_calls_cmd}"})
+            #     elif tool_calls_query != "":
+            #         self.messages.append({"role": "assistant", "content": f" querying knowledge base for {tool_calls_query}"})
+            #     else:
+            #         pass
             # print(self.messages)
 
             ## parse command
             if tool_calls_cmd != "":
-                print(f"NEO >>> {tool_calls_cmd_description}")
-                print(f">> Running command: {tool_calls_cmd} (Y/n) ", end="")
+                log_print(f"NEO >>> {tool_calls_cmd_description}")
+                log_print(f">> Running command: {tool_calls_cmd} (Y/n) ", end="")
                 if input().strip() in ["y", ""]:
                     try:
                         cmd_res = run_terminal(tool_calls_cmd)
-                        print(f"returncode: {cmd_res['returncode']}")
-                        print(f"output: >>> \n {cmd_res['output']}")
-                        print(f"error: >>> \n {cmd_res['error']}")
+                        log_print(f"returncode: {cmd_res['returncode']}")
+                        log_print(f"output: >>> \n {cmd_res['output']}")
+                        log_print(f"error: >>> \n {cmd_res['error']}")
                     except KeyboardInterrupt:
-                        print("Command interrupted by user. Try to fix the problem by NEO")
+                        log_print("Command interrupted by user. Try to fix the problem by NEO")
                         cmd_res = "Command interrupted by user. Something wrong with the command, lack of input? please check the command and try again."
                     user_prompt = str(cmd_res)
                 else:
@@ -203,7 +218,7 @@ class NEO(object):
                     if user_prompt == "exit":
                         break
             elif tool_calls_query != "":
-                print(f"NEO >>> querying knowledge base for {tool_calls_query}")
+                log_print(f"NEO >>> querying knowledge base for {tool_calls_query}")
                 user_prompt = f"The answer to your query is below: \n{'>'*80}\n{str(self.knowledge.query_pair(tool_calls_query))} \n {'>'*80}"
             elif tool_calls_skill != "":
                 print(f"NEO >>> loading skill content for {tool_calls_skill}")
