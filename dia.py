@@ -36,6 +36,21 @@ class NEO(object):
             print(f" [{i+1:>2}] {query}")
         print("="*80)
 
+        # Load skills
+        from skills_loader import SkillsLoader
+        self.skills_loader = SkillsLoader()
+        if self.skills_loader.get_skill_list():
+            print("="*80)
+            print("Available skills:")
+            for i, skill_name in enumerate(self.skills_loader.get_skill_list()):
+                metadata = self.skills_loader.get_skill_metadata(skill_name)
+                print(f" [{i+1:>2}] {skill_name}: {metadata['description']}")
+            print("="*80)
+
+            # Add skills to system prompt
+            skills_info = self.skills_loader.format_skills_for_prompt()
+            self.messages[0]["content"] += "\n\n" + skills_info
+
 
     def __call__(self):
 
@@ -79,6 +94,24 @@ class NEO(object):
                     },
                 },
             },
+            {
+                "type": "function",
+                "function": {
+                    "name": "load_skill_content",
+                    "description": "Load the full content of a specific skill to get detailed instructions and guidelines",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "skill_name": {
+                                "type": "string",
+                                "description": "the name of the skill to load",
+                                "enum": self.skills_loader.get_skill_list(),
+                            },
+                        },
+                        "required": ["skill_name"],
+                    },
+                },
+            },
         ]
 
         headers = {
@@ -118,6 +151,7 @@ class NEO(object):
             tool_calls_cmd = ""
             tool_calls_cmd_description = ""
             tool_calls_query = ""
+            tool_calls_skill = ""
             if "tool_calls" in result["choices"][0]["message"]:
                 tool_calls = result["choices"][0]["message"]["tool_calls"][0]["function"]
                 tool_calls_args = json.loads(
@@ -128,6 +162,8 @@ class NEO(object):
                     tool_calls_cmd_description = tool_calls_args.get("description", "")
                 elif tool_calls.get("name", "") == "query_knowledge":
                     tool_calls_query = tool_calls_args.get("query", "")
+                elif tool_calls.get("name", "") == "load_skill_content":
+                    tool_calls_skill = tool_calls_args.get("skill_name", "")
                 else:
                     pass
             else:
@@ -142,6 +178,8 @@ class NEO(object):
                     self.messages.append({"role": "assistant", "content": f" running command: {tool_calls_cmd}"})
                 elif tool_calls_query != "":
                     self.messages.append({"role": "assistant", "content": f" querying knowledge base for {tool_calls_query}"})
+                elif tool_calls_skill != "":
+                    self.messages.append({"role": "assistant", "content": f" loading skill content for {tool_calls_skill}"})
                 else:
                     pass
             # print(self.messages)
@@ -167,6 +205,13 @@ class NEO(object):
             elif tool_calls_query != "":
                 print(f"NEO >>> querying knowledge base for {tool_calls_query}")
                 user_prompt = f"The answer to your query is below: \n{'>'*80}\n{str(self.knowledge.query_pair(tool_calls_query))} \n {'>'*80}"
+            elif tool_calls_skill != "":
+                print(f"NEO >>> loading skill content for {tool_calls_skill}")
+                skill_content = self.skills_loader.get_skill_content(tool_calls_skill)
+                if skill_content:
+                    user_prompt = f"The skill content is below: \n{'>'*80}\n{skill_content} \n {'>'*80}"
+                else:
+                    user_prompt = f"Error: Skill '{tool_calls_skill}' not found."
             else:
                 user_prompt = input("\n"+">"*80+"\nUser >>> ")
                 if user_prompt == "exit":
